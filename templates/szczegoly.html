@@ -7,6 +7,11 @@
         <h1>{{ urzadzenie.nazwa }}</h1>
         <h2>{{ urzadzenie.identyfikator_sprzetu }}</h2>
     </hgroup>
+        <!-- NOWY PRZYCISK "USUŃ" -->
+    <a href="#" class="contrast outline" role="button" onclick="return confirm('Czy na pewno chcesz trwale usunąć to urządzenie i całą jego historię?')">Usuń urządzenie</a>
+    <!-- UWAGA: Na razie href="#" nic nie robi. Podłączymy to, gdy będziemy pisać funkcję usuwania. -->
+
+    <article>
 
     <article>
         <p><strong>Producent:</strong> {{ urzadzenie.producent }}</p>

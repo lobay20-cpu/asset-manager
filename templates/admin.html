@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Administracyjny{% endblock %}
+
+{% block content %}
+    <h2>Panel Administracyjny</h2>
+    <p>Tutaj znajdują się rzadziej używane, potencjalnie niebezpieczne akcje.</p>
+    
+    <div class="grid">
+        <article>
+            <h4>Zarządzanie Urządzeniami</h4>
+            <a href="{{ url_for('dodaj_urzadzenie') }}" role="button">Dodaj nowe urządzenie</a>
+        </article>
+        <article>
+            <h4>Inne Akcje</h4>
+            <p><i>(W przyszłości pojawią się tu np. opcje zarządzania użytkownikami, lokalizacjami itp.)</i></p>
+        </article>
+    </div>
+
+{% endblock %}

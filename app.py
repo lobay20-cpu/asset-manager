@@ -17,6 +17,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 # Wyłączamy niepotrzebne śledzenie modyfikacji, aby oszczędzić zasoby
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+@app.route('/admin')
+def panel_admina():
+    return render_template('admin.html')
 
 # Tworzymy obiekt bazy danych, łącząc SQLAlchemy z naszą aplikacją Flask
 db = SQLAlchemy(app)
