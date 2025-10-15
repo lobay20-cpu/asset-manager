@@ -55,11 +55,17 @@
             <ul>
                 <li><strong><a href="{{ url_for('index') }}">Asset Manager</a></strong></li>
             </ul>
+            <ul>
+                <li><small>V0.1 PoC</small></li>
+            </ul>
         </nav>
 
         <!-- 4. Tutaj będzie wstrzykiwana unikalna treść każdej podstrony -->
         {% block content %}{% endblock %}
 
     </main>
+    <footer class="container">
+        <small class="muted-text">Powered by IneiMorana</small>
+    </footer>
 </body>
 </html>
