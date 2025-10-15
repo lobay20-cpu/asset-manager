@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Lista Urządzeń{% endblock %}
+
+{% block content %}
+    <hgroup>
+        <h1>Lista Urządzeń</h1>
+        <h2>Przeglądaj i zarządzaj sprzętem firmowym.</h2>
+    </hgroup>
+    
+    <p><a href="{{ url_for('dodaj_urzadzenie') }}" role="button">Dodaj nowe urządzenie</a></p>
+
+    <figure>
+        <table>
+            <thead>
+                <tr>
+                    <th>Identyfikator</th>
+                    <th>Nazwa</th>
+                    <th>Aktualna Lokalizacja</th>
+                    <th>Status</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for urzadzenie in urzadzenia %}
+                <tr>
+                    <td><a href="{{ url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie.id) }}">{{ urzadzenie.identyfikator_sprzetu }}</a></td>
+                    <td>{{ urzadzenie.nazwa }}</td>
+                    <td>{{ urzadzenie.aktualna_lokalizacja }}</td>
+                    <td><span class="status-tag status-{{ urzadzenie.aktualny_status | lower | replace(' ', '-') | replace('ż', 'z') | replace('ę', 'e') }}">{{ urzadzenie.aktualny_status }}</span></td>
+                    <td><a href="{{ url_for('zmien_status', urzadzenie_id=urzadzenie.id) }}">Zmień</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </figure>
+{% endblock %}

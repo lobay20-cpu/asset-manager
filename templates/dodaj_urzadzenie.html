@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Dodaj Nowe Urządzenie{% endblock %}
+
+{% block content %}
+    <h2>Dodaj Nowe Urządzenie</h2>
+
+    {% if error %}
+        <p style="color: var(--pico-color-red-500);">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" autocomplete="off">
+        <label for="identyfikator_sprzetu">Identyfikator Sprzętu (np. RTR-SER-004)</label>
+        <input type="text" name="identyfikator_sprzetu" id="identyfikator_sprzetu" required>
+
+        <label for="nazwa">Nazwa (np. Router Huawei E5577C)</label>
+        <input type="text" name="nazwa" id="nazwa" required>
+
+        <label for="producent">Producent</label>
+        <input type="text" name="producent" id="producent">
+
+        <label for="nr_seryjny">Numer seryjny</label>
+        <input type="text" name="nr_seryjny" id="nr_seryjny">
+
+        <label for="data_zakupu">Data zakupu</label>
+        <input type="date" name="data_zakupu" id="data_zakupu">
+
+        <label for="aktualny_imei_sim">Numer IMEI karty SIM</label>
+        <input type="text" name="aktualny_imei_sim" id="aktualny_imei_sim">
+        
+        <button type="submit">Dodaj urządzenie</button>
+    </form>
+    <a href="{{ url_for('index') }}" class="secondary outline" role="button">Anuluj</a>
+{% endblock %}

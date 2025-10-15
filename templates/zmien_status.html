@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Zmień Status Urządzenia{% endblock %}
+
+{% block content %}
+    <h2>Zmiana statusu dla: {{ urzadzenie.nazwa }}</h2>
+    
+    <div class="grid">
+        <article>
+            <strong>Aktualna lokalizacja:</strong> {{ urzadzenie.aktualna_lokalizacja }}
+        </article>
+        <article>
+            <strong>Aktualny status:</strong> <span class="status-tag status-{{ urzadzenie.aktualny_status | lower | replace(' ', '-') | replace('ż', 'z') | replace('ę', 'e') }}">{{ urzadzenie.aktualny_status }}</span>
+        </article>
+    </div>
+
+    <form method="POST">
+        <label for="lokalizacja">Nowa lokalizacja</label>
+        <select name="lokalizacja" id="lokalizacja" required>
+            {% for lok in wszystkie_lokalizacje %}
+                <option value="{{ lok.id }}">{{ lok.nazwa_lokalizacji }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="status">Nowy status</label>
+        <select name="status" id="status" required>
+            {% for status in możliwe_statusy %}
+                <option value="{{ status }}" {% if status == urzadzenie.aktualny_status %}selected{% endif %}>
+                    {{ status }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="uzytkownik">Pracownik dokonujący zmiany</label>
+        <select name="uzytkownik" id="uzytkownik" required>
+            {% for user in wszyscy_uzytkownicy %}
+                <option value="{{ user.id }}">{{ user.imie_nazwisko }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="uwagi">Uwagi</label>
+        <textarea name="uwagi" id="uwagi" rows="3"></textarea>
+
+        <button type="submit">Zapisz Zmiany</button>
+    </form>
+    <a href="{{ url_for('index') }}" class="secondary outline" role="button">Anuluj</a>
+{% endblock %}

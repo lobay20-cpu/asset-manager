@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Szczegóły - {{ urzadzenie.nazwa }}{% endblock %}
+
+{% block content %}
+    <hgroup>
+        <h1>{{ urzadzenie.nazwa }}</h1>
+        <h2>{{ urzadzenie.identyfikator_sprzetu }}</h2>
+    </hgroup>
+
+    <article>
+        <p><strong>Producent:</strong> {{ urzadzenie.producent }}</p>
+        <p><strong>Numer seryjny:</strong> {{ urzadzenie.nr_seryjny }}</p>
+        <p><strong>Data zakupu:</strong> {{ urzadzenie.data_zakupu.strftime('%Y-%m-%d') if urzadzenie.data_zakupu }}</p>
+        <p><strong>Aktualny IMEI SIM:</strong> {{ urzadzenie.aktualny_imei_sim }}</p>
+    </article>
+
+    <h3>Historia Zmian</h3>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Lokalizacja</th>
+                <th>Status</th>
+                <th>Pracownik</th>
+                <th>Uwagi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for wpis in urzadzenie.historia | reverse %}
+            <tr>
+                <td>{{ wpis.data_zmiany.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ wpis.lokalizacja }}</td>
+                <td><span class="status-tag status-{{ wpis.status | lower | replace(' ', '-') | replace('ż', 'z') | replace('ę', 'e') }}">{{ wpis.status }}</span></td>```
+                <td>{{ wpis.uzytkownik.imie_nazwisko }}</td>
+                <td>{{ wpis.uwagi }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">Brak historii zmian dla tego urządzenia.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

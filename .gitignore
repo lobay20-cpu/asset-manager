@@ -1,0 +1,12 @@
+# Plik .gitignore
+
+# Folder środowiska wirtualnego
+venv/
+
+# Pliki cache Pythona
+__pycache__/
+*.pyc
+
+# Plik bazy danych SQLite
+database.db
+instance/

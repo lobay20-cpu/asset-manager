@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 1. Magia dzieje się tutaj - dołączamy Pico.css z internetu -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pico.min.css') }}">
+    
+    <!-- 2. Każda strona będzie mogła tu wstawić swój własny tytuł -->
+    <title>{% block title %}Asset Manager{% endblock %}</title>
+<style>
+      main.container {
+        max-width: 960px;
+      }
+      article {
+        margin-bottom: 0;
+        padding: 1rem;
+      }
+
+      /* Podstawowy wygląd "pigułki" */
+      .status-tag {
+        display: inline-block;
+        padding: 0.25em 0.6em;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.375rem;
+        color: #fff;
+        background-color: #6c757d; /* Domyślny szary */
+      }
+
+      /* Kolory dla konkretnych statusów - UPROSZCZONE NAZWY */
+      .status-dostepny   { background-color: var(--pico-color-green-500); }
+      .status-w-uzyciu   { background-color: var(--pico-color-blue-500); }
+      .status-rezerwacja { background-color: var(--pico-color-orange-500); }
+      .status-wyslany    { background-color: var(--pico-color-purple-500); }
+      .status-zablokowany{ background-color: var(--pico-color-red-600); }
+      .status-uszkodzony { background-color: var(--pico-color-red-400); }
+            /* Usuwa podkreślenie z linków, które pełnią rolę przycisków */
+      a[role="button"]:hover {
+        text-decoration: none;
+      }
+      
+    </style>```
+
+</head>
+<body>
+    <!-- 3. Używamy kontenera Pico, aby wszystko ładnie się wyśrodkowało -->
+    <main class="container">
+        <!-- Prosta nawigacja -->
+        <nav>
+            <ul>
+                <li><strong><a href="{{ url_for('index') }}">Asset Manager</a></strong></li>
+            </ul>
+        </nav>
+
+        <!-- 4. Tutaj będzie wstrzykiwana unikalna treść każdej podstrony -->
+        {% block content %}{% endblock %}
+
+    </main>
+</body>
+</html>
