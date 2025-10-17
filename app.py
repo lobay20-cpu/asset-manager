@@ -49,8 +49,8 @@ class Urzadzenie(db.Model):
     aktualny_status = db.Column(db.String(50))
     uwagi_serwisowe = db.Column(db.Text)
     # Relacja do historii zmian - pozwala łatwo uzyskać wszystkie wpisy historii dla danego urządzenia
-    historia = db.relationship('HistoriaZmian', backref='urzadzenie', lazy=True)
-
+    historia = db.relationship('HistoriaZmian', backref='urzadzenie', lazy=True, cascade="all, delete-orphan")
+   
 class Uzytkownik(db.Model):
     __tablename__ = 'uzytkownicy'
     id = db.Column(db.Integer, primary_key=True)
@@ -78,8 +78,19 @@ class HistoriaZmian(db.Model):
 
 @app.route('/')
 def index():
-    wszystkie_urzadzenia = Urzadzenie.query.all()
-    return render_template('index.html', urzadzenia=wszystkie_urzadzenia)
+    wybrany_status = request.args.get('status')
+
+    if wybrany_status == 'Dostępny':
+        # Filtruj tylko po statusie "Dostępny"
+        wszystkie_urzadzenia = Urzadzenie.query.filter_by(aktualny_status='Dostępny').all()
+    else:
+        # Domyślnie (lub gdy status nie jest 'Dostępny'), pokaż wszystko
+        wybrany_status = 'Wszystkie' # Ustawiamy na sztywno dla podświetlenia przycisku
+        wszystkie_urzadzenia = Urzadzenie.query.all()
+    
+    return render_template('index.html', 
+                           urzadzenia=wszystkie_urzadzenia,
+                           wybrany_status=wybrany_status)
 
 
 @app.route('/zmien/<int:urzadzenie_id>', methods=['GET', 'POST'])
@@ -168,6 +179,59 @@ def dodaj_urzadzenie():
     # Jeśli metoda to GET lub wystąpił błąd, wyświetlamy formularz.
     # Przekazujemy zmienną 'error' do szablonu.
     return render_template('dodaj_urzadzenie.html', error=error)
+
+# NOWA FUNKCJA DO USUWANIA URZĄDZENIA
+@app.route('/usun/<int:urzadzenie_id>')
+def usun_urzadzenie(urzadzenie_id):
+    # Krok 1: Znajdź w bazie urządzenie, które chcemy usunąć.
+    # Jeśli nie istnieje, automatycznie zwróci błąd 404.
+    urzadzenie_do_usuniecia = Urzadzenie.query.get_or_404(urzadzenie_id)
+    
+    # Krok 2: Dodaj znaleziony obiekt do "kolejki do usunięcia" w sesji bazy danych.
+    db.session.delete(urzadzenie_do_usuniecia)
+    
+    # Krok 3: Zatwierdź zmiany - to jest moment fizycznego usunięcia danych.
+    db.session.commit()
+    
+    # Krok 4: Przekieruj użytkownika z powrotem na stronę główną.
+    return redirect(url_for('index'))
+
+# NOWA FUNKCJA DO EDYCJI URZĄDZENIA
+@app.route('/edytuj/<int:urzadzenie_id>', methods=['GET', 'POST'])
+def edytuj_urzadzenie(urzadzenie_id):
+    # Krok 1: Pobierz z bazy urządzenie, które chcemy edytować.
+    urzadzenie_do_edycji = Urzadzenie.query.get_or_404(urzadzenie_id)
+    error = None
+
+    if request.method == 'POST':
+        # Krok 2: Jeśli formularz został wysłany, pobierz nowe dane.
+        try:
+            urzadzenie_do_edycji.identyfikator_sprzetu = request.form.get('identyfikator_sprzetu')
+            urzadzenie_do_edycji.nazwa = request.form.get('nazwa')
+            urzadzenie_do_edycji.producent = request.form.get('producent')
+            urzadzenie_do_edycji.nr_seryjny = request.form.get('nr_seryjny')
+            urzadzenie_do_edycji.aktualny_imei_sim = request.form.get('aktualny_imei_sim')
+            
+            data_zakupu_str = request.form.get('data_zakupu')
+            if data_zakupu_str:
+                urzadzenie_do_edycji.data_zakupu = datetime.strptime(data_zakupu_str, '%Y-%m-%d').date()
+            else:
+                urzadzenie_do_edycji.data_zakupu = None
+
+            # Krok 3: Zapisz zmiany w bazie.
+            db.session.commit()
+            
+            # Krok 4: Przekieruj na stronę szczegółów tego urządzenia.
+            return redirect(url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie_id))
+        
+        except IntegrityError:
+            # Obsługa błędu, jeśli nowy identyfikator lub nr seryjny już istnieje.
+            db.session.rollback()
+            error = "Błąd: Identyfikator sprzętu lub numer seryjny już istnieje w bazie danych."
+
+    # Krok 5: Jeśli metoda to GET (lub wystąpił błąd), wyświetl formularz
+    # z już wypełnionymi danymi urządzenia.
+    return render_template('edytuj_urzadzenie.html', urzadzenie=urzadzenie_do_edycji, error=error)
 
 # --- URUCHOMIENIE APLIKACJI ---
 

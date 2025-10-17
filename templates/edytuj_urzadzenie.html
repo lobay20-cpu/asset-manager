@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Edytuj Urządzenie{% endblock %}
+
+{% block content %}
+    <h2>Edytuj Urządzenie</h2>
+
+    {% if error %}
+        <p style="color: var(--pico-color-red-500);">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" autocomplete="off">
+        <label for="identyfikator_sprzetu">Identyfikator Sprzętu:</label>
+        <input type="text" name="identyfikator_sprzetu" id="identyfikator_sprzetu" value="{{ urzadzenie.identyfikator_sprzetu }}" required readonly>
+
+        <label for="nazwa">Nazwa:</label>
+        <input type="text" name="nazwa" id="nazwa" value="{{ urzadzenie.nazwa }}" required>
+
+        <label for="producent">Producent:</label>
+        <input type="text" name="producent" id="producent" value="{{ urzadzenie.producent or '' }}">
+
+        <label for="nr_seryjny">Numer seryjny:</label>
+        <input type="text" name="nr_seryjny" id="nr_seryjny" value="{{ urzadzenie.nr_seryjny or '' }}" readonly>
+
+        <label for="data_zakupu">Data zakupu:</label>
+        <input type="date" name="data_zakupu" id="data_zakupu" value="{{ urzadzenie.data_zakupu.strftime('%Y-%m-%d') if urzadzenie.data_zakupu }}" readonly>
+
+        <label for="aktualny_imei_sim">Numer IMEI karty SIM:</label>
+        <input type="text" name="aktualny_imei_sim" id="aktualny_imei_sim" value="{{ urzadzenie.aktualny_imei_sim or '' }}">
+        
+        <div class="grid">
+            <button type="submit">Zapisz zmiany</button>
+            <a href="{{ url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie.id) }}" class="secondary outline" role="button">Anuluj</a>
+        </div>
+    </form>
+{% endblock %}

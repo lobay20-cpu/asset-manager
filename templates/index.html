@@ -7,6 +7,25 @@
         <h1>Lista Urządzeń</h1>
         <h2>Przeglądaj i zarządzaj sprzętem firmowym.</h2>
     </hgroup>
+     <form method="GET" action="{{ url_for('index') }}">
+            <div style="margin-bottom: 1rem;">
+        <!-- Przycisk "Wszystkie" -->
+        <a href="{{ url_for('index', status='Wszystkie') }}" 
+           role="button" 
+           class="{{ 'primary' if wybrany_status == 'Wszystkie' else 'secondary outline' }}">
+           Wszystkie
+        </a>
+
+        <!-- Przycisk "Dostępne" -->
+        <a href="{{ url_for('index', status='Dostępny') }}" 
+           role="button" 
+           class="{{ 'primary' if wybrany_status == 'Dostępny' else 'secondary outline' }}">
+           Dostępne
+        </a>
+    </div>
+
+    <figure>
+        <table>
     <figure>
         <table>
             <thead>

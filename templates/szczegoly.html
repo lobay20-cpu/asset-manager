@@ -7,10 +7,15 @@
         <h1>{{ urzadzenie.nazwa }}</h1>
         <h2>{{ urzadzenie.identyfikator_sprzetu }}</h2>
     </hgroup>
-        <!-- NOWY PRZYCISK "USUŃ" -->
-    <a href="#" class="contrast outline" role="button" onclick="return confirm('Czy na pewno chcesz trwale usunąć to urządzenie i całą jego historię?')">Usuń urządzenie</a>
-    <!-- UWAGA: Na razie href="#" nic nie robi. Podłączymy to, gdy będziemy pisać funkcję usuwania. -->
 
+        <!-- NOWY PRZYCISK "USUŃ" "EDYTUJ" -->
+ <div class="grid">
+        <a href="{{ url_for('edytuj_urzadzenie', urzadzenie_id=urzadzenie.id) }}" role="button">Edytuj dane</a>
+        <a href="{{ url_for('usun_urzadzenie', urzadzenie_id=urzadzenie.id) }}" class="contrast outline" role="button" onclick="return confirm('Czy na pewno chcesz trwale usunąć to urządzenie i całą jego historię?')">Usuń urządzenie</a>
+    </div>
+        
+    </div>
+        
     <article>
 
     <article>
