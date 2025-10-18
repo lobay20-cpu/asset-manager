@@ -3,18 +3,51 @@
 {% block title %}Panel Administracyjny{% endblock %}
 
 {% block content %}
-    <h2>Panel Administracyjny</h2>
-    <p>Tutaj znajdują się rzadziej używane, potencjalnie niebezpieczne akcje.</p>
+    <hgroup>
+        <h2>Panel Administracyjny</h2>
+        <p>Zarządzaj kluczowymi elementami systemu.</p>
+    </hgroup>
     
     <div class="grid">
+        <!-- Lewa kolumna: Zarządzanie Urządzeniami -->
         <article>
             <h4>Zarządzanie Urządzeniami</h4>
             <a href="{{ url_for('dodaj_urzadzenie') }}" role="button">Dodaj nowe urządzenie</a>
         </article>
+
+        <!-- Prawa kolumna: Zarządzanie Grupami -->
         <article>
-            <h4>Inne Akcje</h4>
-            <p><i>(W przyszłości pojawią się tu np. opcje zarządzania użytkownikami, lokalizacjami itp.)</i></p>
+            <h4>Zarządzanie Grupami</h4>
+            
+            <!-- Tabela z listą grup -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nazwa Grupy</th>
+                        <th>Skrót</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grupa in wszystkie_grupy %}
+                    <tr>
+                        <td>{{ grupa.nazwa_grupy }}</td>
+                        <td>{{ grupa.skrot }}</td>
+                        <td>
+                            <!-- Linki do edycji/usuwania (na razie nieaktywne) -->
+                            <a href="#">Edytuj</a> | <a href="#" style="color: var(--pico-color-red-500);">Usuń</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3"><i>Brak zdefiniowanych grup.</i></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <br>
+            <!-- Przycisk do dodawania nowej grupy -->
+            <a href="{{ url_for('dodaj_grupe') }}" role="button">Dodaj nową grupę</a>
         </article>
     </div>
-
 {% endblock %}

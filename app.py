@@ -17,9 +17,47 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 # Wyłączamy niepotrzebne śledzenie modyfikacji, aby oszczędzić zasoby
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 @app.route('/admin')
 def panel_admina():
-    return render_template('admin.html')
+    # Pobierz wszystkie grupy z bazy danych, posortowane alfabetycznie
+    wszystkie_grupy = Grupa.query.order_by(Grupa.nazwa_grupy).all()
+    # Przekaż pobraną listę do szablonu
+    return render_template('admin.html', wszystkie_grupy=wszystkie_grupy)
+
+# NOWA FUNKCJA DO DODAWANIA GRUPY
+@app.route('/admin/dodaj-grupe', methods=['GET', 'POST'])
+def dodaj_grupe():
+    error = None
+    if request.method == 'POST':
+        # Pobieramy dane z formularza
+        nazwa_grupy = request.form.get('nazwa_grupy')
+        skrot = request.form.get('skrot')
+
+        # Prosta walidacja, czy pola nie są puste
+        if not nazwa_grupy or not skrot:
+            error = "Oba pola (Nazwa grupy i Skrót) są wymagane."
+        elif len(skrot) != 3:
+            error = "Skrót musi składać się z dokładnie 3 liter."    
+        else:
+            try:
+                
+                # Tworzymy nowy obiekt Grupa
+                nowa_grupa = Grupa(nazwa_grupy=nazwa_grupy, skrot=skrot.upper())
+                
+                db.session.add(nowa_grupa)
+                db.session.commit()
+                
+                # Przekierowujemy z powrotem do panelu admina
+                return redirect(url_for('panel_admina'))
+
+            except IntegrityError:
+                db.session.rollback()
+                error = f"Błąd: Grupa o nazwie '{nazwa_grupy}' lub skrócie '{skrot.upper()}' już istnieje."
+
+    # Dla metody GET lub w razie błędu, wyświetlamy formularz
+    return render_template('dodaj_grupe.html', error=error)
+
 
 # Tworzymy obiekt bazy danych, łącząc SQLAlchemy z naszą aplikacją Flask
 db = SQLAlchemy(app)
@@ -36,21 +74,6 @@ MOZLIWE_STATUSY = [
 
 # --- MODELE DANYCH (ODWZOROWANIE TABEL BAZY DANYCH) ---
 
-class Urzadzenie(db.Model):
-    __tablename__ = 'urzadzenia' # Opcjonalnie: явna nazwa tabeli
-    id = db.Column(db.Integer, primary_key=True)
-    identyfikator_sprzetu = db.Column(db.String(50), unique=True, nullable=False)
-    nazwa = db.Column(db.String(100), nullable=False)
-    producent = db.Column(db.String(100))
-    nr_seryjny = db.Column(db.String(100), unique=True)
-    data_zakupu = db.Column(db.Date)
-    aktualny_imei_sim = db.Column(db.String(50))
-    aktualna_lokalizacja = db.Column(db.String(100))
-    aktualny_status = db.Column(db.String(50))
-    uwagi_serwisowe = db.Column(db.Text)
-    # Relacja do historii zmian - pozwala łatwo uzyskać wszystkie wpisy historii dla danego urządzenia
-    historia = db.relationship('HistoriaZmian', backref='urzadzenie', lazy=True, cascade="all, delete-orphan")
-   
 class Uzytkownik(db.Model):
     __tablename__ = 'uzytkownicy'
     id = db.Column(db.Integer, primary_key=True)
@@ -61,7 +84,39 @@ class Lokalizacja(db.Model):
     __tablename__ = 'lokalizacje'
     id = db.Column(db.Integer, primary_key=True)
     nazwa_lokalizacji = db.Column(db.String(100), unique=True, nullable=False)
-    typ_lokalizacji = db.Column(db.String(50), nullable=False) # np. Magazyn, Pojazd, Budowa
+    typ_lokalizacji = db.Column(db.String(50), nullable=False)
+
+class Grupa(db.Model):
+    __tablename__ = 'grupy'
+    id = db.Column(db.Integer, primary_key=True)
+    nazwa_grupy = db.Column(db.String(100), unique=True, nullable=False)
+    skrot = db.Column(db.String(10), unique=True, nullable=False)
+    urzadzenia = db.relationship('Urzadzenie', back_populates='grupa', lazy=True)
+
+class Urzadzenie(db.Model):
+    __tablename__ = 'urzadzenia'
+    id = db.Column(db.Integer, primary_key=True)
+        # Używamy jednego, globalnie unikalnego numeru
+    numer_ewidencyjny = db.Column(db.Integer, unique=True, nullable=False)
+    nazwa = db.Column(db.String(100), nullable=False)
+    producent = db.Column(db.String(100))
+    nr_seryjny = db.Column(db.String(100), unique=True)
+    data_zakupu = db.Column(db.Date)
+    aktualny_imei_sim = db.Column(db.String(50))
+    aktualna_lokalizacja = db.Column(db.String(100))
+    aktualny_status = db.Column(db.String(50))
+    uwagi_serwisowe = db.Column(db.Text)
+    grupa_id = db.Column(db.Integer, db.ForeignKey('grupy.id'), nullable=False)
+    grupa = db.relationship('Grupa', back_populates='urzadzenia')
+    historia = db.relationship('HistoriaZmian', backref='urzadzenie', lazy=True, cascade="all, delete-orphan")
+
+    @property
+    def identyfikator_sprzetu(self):
+        # Składamy identyfikator z globalnego numeru
+        return f"AP-{self.grupa.skrot}-{self.numer_ewidencyjny:03d}"
+
+
+
 
 class HistoriaZmian(db.Model):
     __tablename__ = 'historia_zmian'
@@ -71,10 +126,16 @@ class HistoriaZmian(db.Model):
     status = db.Column(db.String(50))
     imei_sim = db.Column(db.String(50))
     uwagi = db.Column(db.Text)
-    # Klucze obce - czyli połączenia z innymi tabelami
     urzadzenie_id = db.Column(db.Integer, db.ForeignKey('urzadzenia.id'), nullable=False)
     uzytkownik_id = db.Column(db.Integer, db.ForeignKey('uzytkownicy.id'), nullable=False)
 
+def generuj_nastepny_numer():
+    # Znajdź ostatnie urządzenie, posortowane po numerze, niezależnie od grupy
+    ostatnie_urzadzenie = Urzadzenie.query.order_by(Urzadzenie.numer_ewidencyjny.desc()).first()
+    if ostatnie_urzadzenie:
+        return ostatnie_urzadzenie.numer_ewidencyjny + 1
+    else:
+        return 1
 
 @app.route('/')
 def index():
@@ -137,48 +198,58 @@ def szczegoly_urzadzenia(urzadzenie_id):
     urzadzenie = Urzadzenie.query.get_or_404(urzadzenie_id)
     return render_template('szczegoly.html', urzadzenie=urzadzenie)
 
-@app.route('/dodaj', methods=['GET', 'POST'])
+@app.route('/admin/dodaj-urzadzenie', methods=['GET', 'POST'])
 def dodaj_urzadzenie():
-    # Definiujemy zmienną błędu na początku
     error = None
     if request.method == 'POST':
-        # ... (pobieranie danych z formularza bez zmian) ...
-        identyfikator = request.form.get('identyfikator_sprzetu')
+        # Pobieramy dane z formularza
+        grupa_id = request.form.get('grupa')
         nazwa = request.form.get('nazwa')
         producent = request.form.get('producent')
         nr_seryjny = request.form.get('nr_seryjny')
         data_zakupu_str = request.form.get('data_zakupu')
         imei = request.form.get('aktualny_imei_sim')
         
-        data_zakupu = None
-        if data_zakupu_str:
-            data_zakupu = datetime.strptime(data_zakupu_str, '%Y-%m-%d').date()
+        # Sprawdzamy, czy wybrano grupę
+        if not grupa_id:
+            error = "Błąd: Musisz wybrać grupę urządzenia."
+        else:
+            try:
+                # --- TUTAJ DZIEJE SIĘ MAGIA ---
+                # 1. Generujemy nowy numer KOLEJNY dla wybranej grupy
+                nowy_numer_ewidencyjny = generuj_nastepny_numer()
 
-        nowe_urzadzenie = Urzadzenie(
-            identyfikator_sprzetu=identyfikator,
-            nazwa=nazwa,
-            producent=producent,
-            nr_seryjny=nr_seryjny,
-            data_zakupu=data_zakupu,
-            aktualny_imei_sim=imei,
-            aktualna_lokalizacja='Magazyn Główny',
-            aktualny_status='Dostępny'
-        )
-        
-        try:
-            db.session.add(nowe_urzadzenie)
-            db.session.commit()
-            return redirect(url_for('index'))
-        except IntegrityError:
-            # Jeśli wystąpi błąd unikalności, baza danych jest w złym stanie.
-            # Musimy "odwołać" nieudaną transakcję.
-            db.session.rollback()
-            # Ustawiamy komunikat błędu, który wyświetlimy na stronie.
-            error = "Błąd: Identyfikator sprzętu lub numer seryjny już istnieje w bazie danych."
+                data_zakupu = None
+                if data_zakupu_str:
+                    data_zakupu = datetime.strptime(data_zakupu_str, '%Y-%m-%d').date()
 
-    # Jeśli metoda to GET lub wystąpił błąd, wyświetlamy formularz.
-    # Przekazujemy zmienną 'error' do szablonu.
-    return render_template('dodaj_urzadzenie.html', error=error)
+                # 2. Tworzymy nowy obiekt z wygenerowanym numerem
+                nowe_urzadzenie = Urzadzenie(
+                    numer_ewidencyjny=nowy_numer_ewidencyjny, # Używamy nowej, poprawnej nazwy pola
+                    grupa_id=grupa_id,
+                    nazwa=nazwa,
+                    producent=producent,
+                    nr_seryjny=nr_seryjny,
+                    data_zakupu=data_zakupu,
+                    aktualny_imei_sim=imei,
+                    aktualna_lokalizacja='Magazyn Główny',
+                    aktualny_status='Dostępny'
+                )
+                
+                db.session.add(nowe_urzadzenie)
+                db.session.commit()
+                
+                # Przekierowujemy na stronę główną, aby zobaczyć nowy wpis
+                return redirect(url_for('index'))
+            
+            except IntegrityError:
+                db.session.rollback()
+                # Ten błąd nie powinien się już zdarzyć, ale zostawiamy go jako zabezpieczenie
+                error = "Błąd: Wystąpił problem z unikalnością numeru. Spróbuj ponownie."
+
+    # Dla metody GET lub w razie błędu:
+    wszystkie_grupy = Grupa.query.all()
+    return render_template('dodaj_urzadzenie.html', error=error, wszystkie_grupy=wszystkie_grupy)
 
 # NOWA FUNKCJA DO USUWANIA URZĄDZENIA
 @app.route('/usun/<int:urzadzenie_id>')
@@ -208,8 +279,9 @@ def edytuj_urzadzenie(urzadzenie_id):
         try:
             urzadzenie_do_edycji.identyfikator_sprzetu = request.form.get('identyfikator_sprzetu')
             urzadzenie_do_edycji.nazwa = request.form.get('nazwa')
+            urzadzenie_do_edycji.grupa_id = int(request.form.get('grupa'))
+            urzadzenie_do_edycji.nazwa = request.form.get('nazwa')
             urzadzenie_do_edycji.producent = request.form.get('producent')
-            urzadzenie_do_edycji.nr_seryjny = request.form.get('nr_seryjny')
             urzadzenie_do_edycji.aktualny_imei_sim = request.form.get('aktualny_imei_sim')
             
             data_zakupu_str = request.form.get('data_zakupu')
@@ -219,7 +291,7 @@ def edytuj_urzadzenie(urzadzenie_id):
                 urzadzenie_do_edycji.data_zakupu = None
 
             # Krok 3: Zapisz zmiany w bazie.
-            db.session.commit()
+            return redirect(url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie_id))
             
             # Krok 4: Przekieruj na stronę szczegółów tego urządzenia.
             return redirect(url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie_id))
@@ -227,11 +299,12 @@ def edytuj_urzadzenie(urzadzenie_id):
         except IntegrityError:
             # Obsługa błędu, jeśli nowy identyfikator lub nr seryjny już istnieje.
             db.session.rollback()
-            error = "Błąd: Identyfikator sprzętu lub numer seryjny już istnieje w bazie danych."
+            error = "Błąd: Wystąpił problem z unikalnością danych (np. numer seryjny już istnieje)."
 
     # Krok 5: Jeśli metoda to GET (lub wystąpił błąd), wyświetl formularz
     # z już wypełnionymi danymi urządzenia.
-    return render_template('edytuj_urzadzenie.html', urzadzenie=urzadzenie_do_edycji, error=error)
+    wszystkie_grupy = Grupa.query.all()
+    return render_template('edytuj_urzadzenie.html', urzadzenie=urzadzenie_do_edycji, error=error, wszystkie_grupy=wszystkie_grupy)
 
 # --- URUCHOMIENIE APLIKACJI ---
 

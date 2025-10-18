@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Dodaj Nową Grupę{% endblock %}
+
+{% block content %}
+    <h2>Dodaj Nową Grupę Urządzeń</h2>
+    <p>Grupa pozwala kategoryzować sprzęt (np. "Routery Mobilne"). Skrót będzie używany w numeracji (np. "RTR").</p>
+
+    {% if error %}
+        <p style="color: var(--pico-color-red-500);">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" autocomplete="off">
+        <label for="nazwa_grupy">Pełna nazwa grupy</label>
+        <input type="text" name="nazwa_grupy" id="nazwa_grupy" placeholder="np. Laptopy Serwisowe" required>
+
+        <label for="skrot">Skrót 3 litery</label>
+        <input type-="text" name="skrot" id="skrot" placeholder="RTR LAP" required 
+            maxlength="3" 
+            pattern="[A-Za-z]{3}" 
+            title="Skrót musi składać się z dokładnie 3 liter."
+            style="text-transform: uppercase;">
+
+        <div class="grid">
+            <button type="submit">Utwórz grupę</button>
+            <a href="{{ url_for('panel_admina') }}" class="secondary outline" role="button">Anuluj</a>
+        </div>
+    </form>
+{% endblock %}

@@ -10,11 +10,22 @@
     {% endif %}
 
     <form method="POST" autocomplete="off">
-        <label for="identyfikator_sprzetu">Identyfikator Sprzętu:</label>
-        <input type="text" name="identyfikator_sprzetu" id="identyfikator_sprzetu" value="{{ urzadzenie.identyfikator_sprzetu }}" required readonly>
+        <label for="identyfikator_sprzetu">Identyfikator Sprzętu (niezmienny):</label>
+        <input type="text" name="identyfikator_sprzetu" id="identyfikator_sprzetu" value="{{ urzadzenie.identyfikator_sprzetu }}" readonly>
+
 
         <label for="nazwa">Nazwa:</label>
         <input type="text" name="nazwa" id="nazwa" value="{{ urzadzenie.nazwa }}" required>
+
+        <!-- NOWE POLE WYBORU GRUPY -->
+        <label for="grupa">Grupa urządzenia</label>
+        <select name="grupa" id="grupa" required>
+            {% for grupa in wszystkie_grupy %}
+                <option value="{{ grupa.id }}" {% if grupa.id == urzadzenie.grupa_id %}selected{% endif %}>
+                    {{ grupa.nazwa_grupy }}
+                </option>
+            {% endfor %}
+        </select>
 
         <label for="producent">Producent:</label>
         <input type="text" name="producent" id="producent" value="{{ urzadzenie.producent or '' }}">
