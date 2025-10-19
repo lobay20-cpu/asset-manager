@@ -19,7 +19,6 @@
         <article>
             <h4>Zarządzanie Grupami</h4>
             
-            <!-- Tabela z listą grup -->
             <table>
                 <thead>
                     <tr>
@@ -34,8 +33,8 @@
                         <td>{{ grupa.nazwa_grupy }}</td>
                         <td>{{ grupa.skrot }}</td>
                         <td>
-                            <!-- Linki do edycji/usuwania (na razie nieaktywne) -->
-                            <a href="#">Edytuj</a> | <a href="#" style="color: var(--pico-color-red-500);">Usuń</a>
+                            <a href="{{ url_for('edytuj_grupe', grupa_id=grupa.id) }}">Edytuj</a> | 
+                            <a href="{{ url_for('usun_grupe', grupa_id=grupa.id) }}" style="color: var(--pico-color-red-500);" onclick="return confirm('Czy na pewno chcesz usunąć tę grupę? Ta operacja jest nieodwracalna.')">Usuń</a>
                         </td>
                     </tr>
                     {% else %}
@@ -46,7 +45,6 @@
                 </tbody>
             </table>
             <br>
-            <!-- Przycisk do dodawania nowej grupy -->
             <a href="{{ url_for('dodaj_grupe') }}" role="button">Dodaj nową grupę</a>
         </article>
     </div>

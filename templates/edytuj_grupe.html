@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Edytuj Grupę{% endblock %}
+
+{% block content %}
+    <h2>Edytuj Grupę Urządzeń</h2>
+
+    {% if error %}
+        <p style="color: var(--pico-color-red-500);">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" autocomplete="off">
+        <label for="nazwa_grupy">Pełna nazwa grupy</label>
+        <input type="text" name="nazwa_grupy" id="nazwa_grupy" value="{{ grupa.nazwa_grupy }}" required>
+
+        <label for="skrot">Skrót (dokładnie 3 litery)</label>
+        <input type="text" name="skrot" id="skrot" value="{{ grupa.skrot }}" required 
+               maxlength="3" pattern="[A-Za-z]{3}" title="Skrót musi składać się z dokładnie 3 liter."
+               style="text-transform: uppercase;">
+
+        <div class="grid">
+            <button type="submit">Zapisz zmiany</button>
+            <a href="{{ url_for('panel_admina') }}" class="secondary outline" role="button">Anuluj</a>
+        </div>
+    </form>
+{% endblock %}

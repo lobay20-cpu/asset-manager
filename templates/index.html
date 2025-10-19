@@ -7,8 +7,8 @@
         <h1>Lista Urządzeń</h1>
         <h2>Przeglądaj i zarządzaj sprzętem firmowym.</h2>
     </hgroup>
-     <form method="GET" action="{{ url_for('index') }}">
-            <div style="margin-bottom: 1rem;">
+    
+    <div style="margin-bottom: 1rem;">
         <!-- Przycisk "Wszystkie" -->
         <a href="{{ url_for('index', status='Wszystkie') }}" 
            role="button" 
@@ -24,8 +24,6 @@
         </a>
     </div>
 
-    <figure>
-        <table>
     <figure>
         <table>
             <thead>
@@ -45,11 +43,12 @@
                     <td>{{ urzadzenie.nazwa }}</td>
                     <td>{{ urzadzenie.grupa.nazwa_grupy }}</td>
                     <td>{{ urzadzenie.aktualna_lokalizacja }}</td>
-                    <td><span class="status-tag status-{{ urzadzenie.aktualny_status | lower | replace(' ', '-') | replace('ż', 'z') | replace('ę', 'e') }}">{{ urzadzenie.aktualny_status }}</span></td>
+                    <td><span class="status-tag status-{{ urzadzenie.aktualny_status.lower().replace('ę', 'e').replace(' ', '-') }}">{{ urzadzenie.aktualny_status }}</span></td>
                     <td><a href="{{ url_for('zmien_status', urzadzenie_id=urzadzenie.id) }}">Zmień</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </figure>
+
 {% endblock %}

@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
 from sqlalchemy.exc import IntegrityError
+from flask import Flask, render_template, request, redirect, url_for, flash
 
 # --- KONFIGURACJA APLIKACJI ---
 
@@ -11,6 +12,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Tworzymy instancję aplikacji Flask
 app = Flask(__name__)
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'twoj-bardzo-tajny-i-losowy-klucz' # W produkcji powinien to być prawdziwy losowy ciąg
 
 # Konfigurujemy naszą aplikację, aby wiedziała, gdzie jest plik bazy danych.
 # Stworzymy plik 'database.db' w głównym folderze projektu.
@@ -58,6 +61,60 @@ def dodaj_grupe():
     # Dla metody GET lub w razie błędu, wyświetlamy formularz
     return render_template('dodaj_grupe.html', error=error)
 
+# NOWA FUNKCJA DO EDYCJI GRUPY
+@app.route('/admin/edytuj-grupe/<int:grupa_id>', methods=['GET', 'POST'])
+def edytuj_grupe(grupa_id):
+    # Znajdź grupę do edycji lub zwróć błąd 404
+    grupa_do_edycji = Grupa.query.get_or_404(grupa_id)
+    error = None
+
+    if request.method == 'POST':
+        # Pobierz nowe dane z formularza
+        nowa_nazwa = request.form.get('nazwa_grupy')
+        nowy_skrot = request.form.get('skrot')
+
+        # Walidacja (podobna jak przy dodawaniu)
+        if not nowa_nazwa or not nowy_skrot:
+            error = "Oba pola są wymagane."
+        elif len(nowy_skrot) != 3:
+            error = "Skrót musi składać się z dokładnie 3 liter."
+        else:
+            try:
+                # Zaktualizuj pola obiektu
+                grupa_do_edycji.nazwa_grupy = nowa_nazwa
+                grupa_do_edycji.skrot = nowy_skrot.upper()
+                
+                # Zapisz zmiany w bazie
+                db.session.commit()
+                
+                # Wróć do panelu admina
+                return redirect(url_for('panel_admina'))
+            except IntegrityError:
+                db.session.rollback()
+                error = f"Błąd: Grupa o nazwie '{nowa_nazwa}' lub skrócie '{nowy_skrot.upper()}' już istnieje."
+
+    # Dla metody GET, wyświetl formularz z istniejącymi danymi
+    return render_template('edytuj_grupe.html', grupa=grupa_do_edycji, error=error)
+
+# NOWA FUNKCJA DO BEZPIECZNEGO USUWANIA GRUPY
+@app.route('/admin/usun-grupe/<int:grupa_id>')
+def usun_grupe(grupa_id):
+    # Znajdź grupę do usunięcia
+    grupa_do_usuniecia = Grupa.query.get_or_404(grupa_id)
+    
+    # --- KLUCZOWE ZABEZPIECZENIE ---
+    # Sprawdź, czy istnieją jakiekolwiek urządzenia w tej grupie
+    if grupa_do_usuniecia.urzadzenia:
+        # Jeśli tak, nie usuwaj. Wyświetl komunikat błędu.
+        flash(f"Błąd: Nie można usunąć grupy '{grupa_do_usuniecia.nazwa_grupy}', ponieważ są do niej przypisane urządzenia.", 'error')
+    else:
+        # Jeśli nie ma urządzeń, można bezpiecznie usunąć.
+        db.session.delete(grupa_do_usuniecia)
+        db.session.commit()
+        flash(f"Grupa '{grupa_do_usuniecia.nazwa_grupy}' została pomyślnie usunięta.", 'success')
+        
+    # Niezależnie od wyniku, wróć do panelu admina
+    return redirect(url_for('panel_admina'))
 
 # Tworzymy obiekt bazy danych, łącząc SQLAlchemy z naszą aplikacją Flask
 db = SQLAlchemy(app)
@@ -277,18 +334,12 @@ def edytuj_urzadzenie(urzadzenie_id):
     if request.method == 'POST':
         # Krok 2: Jeśli formularz został wysłany, pobierz nowe dane.
         try:
-            urzadzenie_do_edycji.identyfikator_sprzetu = request.form.get('identyfikator_sprzetu')
-            urzadzenie_do_edycji.nazwa = request.form.get('nazwa')
             urzadzenie_do_edycji.grupa_id = int(request.form.get('grupa'))
             urzadzenie_do_edycji.nazwa = request.form.get('nazwa')
             urzadzenie_do_edycji.producent = request.form.get('producent')
             urzadzenie_do_edycji.aktualny_imei_sim = request.form.get('aktualny_imei_sim')
             
-            data_zakupu_str = request.form.get('data_zakupu')
-            if data_zakupu_str:
-                urzadzenie_do_edycji.data_zakupu = datetime.strptime(data_zakupu_str, '%Y-%m-%d').date()
-            else:
-                urzadzenie_do_edycji.data_zakupu = None
+            db.session.commit()
 
             # Krok 3: Zapisz zmiany w bazie.
             return redirect(url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie_id))
