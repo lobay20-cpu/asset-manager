@@ -8,21 +8,35 @@
         <h2>Przeglądaj i zarządzaj sprzętem firmowym.</h2>
     </hgroup>
     
-    <div style="margin-bottom: 1rem;">
-        <!-- Przycisk "Wszystkie" -->
-        <a href="{{ url_for('index', status='Wszystkie') }}" 
-           role="button" 
-           class="{{ 'primary' if wybrany_status == 'Wszystkie' else 'secondary outline' }}">
-           Wszystkie
-        </a>
+    <!-- NOWY, ZAAWANSOWANY FORMULARZ FILTROWANIA -->
+    <form method="GET" action="{{ url_for('index') }}">
+        <div class="grid">
+            <!-- Filtr Grupy -->
+            <select name="grupa_id" id="grupa_id">
+                <option value="Wszystkie">Grupa: Wszystkie</option>
+                {% for grupa in wszystkie_grupy %}
+                    <option value="{{ grupa.id }}" {% if grupa.id == wybrana_grupa_id %}selected{% endif %}>
+                        Grupa: {{ grupa.nazwa_grupy }}
+                    </option>
+                {% endfor %}
+            </select>
 
-        <!-- Przycisk "Dostępne" -->
-        <a href="{{ url_for('index', status='Dostępny') }}" 
-           role="button" 
-           class="{{ 'primary' if wybrany_status == 'Dostępny' else 'secondary outline' }}">
-           Dostępne
-        </a>
-    </div>
+            <!-- Filtr Statusu -->
+            <select name="status" id="status">
+                {% for status in wszystkie_statusy %}
+                    <option value="{{ status }}" {% if status == wybrany_status %}selected{% endif %}>
+                        Status: {{ status }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="grid">
+            <!-- Przyciski -->
+            <button type="submit">Filtruj</button>
+            <a href="{{ url_for('index') }}" class="secondary outline" role="button">Wyczyść filtry</a>
+        </div>
+    </form>
 
     <figure>
         <table>

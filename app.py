@@ -196,20 +196,33 @@ def generuj_nastepny_numer():
 
 @app.route('/')
 def index():
+    # Krok 1: Pobierz parametry filtrowania z adresu URL.
     wybrany_status = request.args.get('status')
+    wybrana_grupa_id = request.args.get('grupa_id')
 
-    if wybrany_status == 'Dostępny':
-        # Filtruj tylko po statusie "Dostępny"
-        wszystkie_urzadzenia = Urzadzenie.query.filter_by(aktualny_status='Dostępny').all()
-    else:
-        # Domyślnie (lub gdy status nie jest 'Dostępny'), pokaż wszystko
-        wybrany_status = 'Wszystkie' # Ustawiamy na sztywno dla podświetlenia przycisku
-        wszystkie_urzadzenia = Urzadzenie.query.all()
+    # Krok 2: Zacznij budować zapytanie do bazy. Zaczynamy od "daj mi wszystko".
+    query = Urzadzenie.query
+
+    # Krok 3: Stopniowo dodawaj filtry do zapytania, jeśli zostały wybrane.
+    if wybrany_status and wybrany_status != 'Wszystkie':
+        query = query.filter(Urzadzenie.aktualny_status == wybrany_status)
+    
+    if wybrana_grupa_id and wybrana_grupa_id != 'Wszystkie':
+        query = query.filter(Urzadzenie.grupa_id == wybrana_grupa_id)
+
+    # Krok 4: Na samym końcu wykonaj zbudowane zapytanie.
+    urzadzenia_do_wyswietlenia = query.order_by(Urzadzenie.id).all()
+    
+    # Krok 5: Przygotuj dane potrzebne do wyświetlenia formularza filtrów.
+    wszystkie_grupy = Grupa.query.order_by(Grupa.nazwa_grupy).all()
     
     return render_template('index.html', 
-                           urzadzenia=wszystkie_urzadzenia,
-                           wybrany_status=wybrany_status)
-
+                           urzadzenia=urzadzenia_do_wyswietlenia,
+                           wszystkie_grupy=wszystkie_grupy,
+                           wszystkie_statusy=['Wszystkie'] + MOZLIWE_STATUSY,
+                           wybrany_status=wybrany_status or 'Wszystkie',
+                           wybrana_grupa_id=int(wybrana_grupa_id) if wybrana_grupa_id and wybrana_grupa_id != 'Wszystkie' else 
+'Wszystkie')
 
 @app.route('/zmien/<int:urzadzenie_id>', methods=['GET', 'POST'])
 def zmien_status(urzadzenie_id):
