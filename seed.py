@@ -7,9 +7,11 @@ with app.app_context():
     db.create_all()
 
     # KROK 2: Tworzymy użytkowników i lokalizacje (bez zmian)
-    user1 = Uzytkownik(imie_nazwisko='Jan Kowalski')
-    user2 = Uzytkownik(imie_nazwisko='Anna Nowak')
-    db.session.add_all([user1, user2])
+    user1 = Uzytkownik(imie_nazwisko='Jan Kowalski', is_active=True)
+    user2 = Uzytkownik(imie_nazwisko='Anna Nowak', is_active=True)
+    user3 = Uzytkownik(imie_nazwisko='Tomasz Potocki', is_active=True)
+    user4 = Uzytkownik(imie_nazwisko='Zwolniony Pracownik', is_active=False)
+    db.session.add_all([user1, user2, user3, user4])
 
     lok1 = Lokalizacja(nazwa_lokalizacji='Magazyn Główny', typ_lokalizacji='Magazyn')
     lok2 = Lokalizacja(nazwa_lokalizacji='Samochód SER-01', typ_lokalizacji='Pojazd')

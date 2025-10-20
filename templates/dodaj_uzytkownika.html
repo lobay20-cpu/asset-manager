@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Dodaj Nowego Użytkownika{% endblock %}
+
+{% block content %}
+    <h2>Dodaj Nowego Użytkownika</h2>
+    <p>Wprowadź imię i nazwisko pracownika, który będzie mógł być wybierany na listach.</p>
+
+    {% if error %}
+        <p style="color: var(--pico-color-red-500);">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" autocomplete="off">
+        <label for="imie_nazwisko">Imię i Nazwisko</label>
+        <input type="text" name="imie_nazwisko" id="imie_nazwisko" placeholder="np. Adam Małysz" required>
+
+        <div class="grid">
+            <button type="submit">Dodaj użytkownika</button>
+            <a href="{{ url_for('panel_admina') }}" class="secondary outline" role="button">Anuluj</a>
+        </div>
+    </form>
+{% endblock %}

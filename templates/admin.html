@@ -47,5 +47,46 @@
             <br>
             <a href="{{ url_for('dodaj_grupe') }}" role="button">Dodaj nową grupę</a>
         </article>
+
+<!-- NOWA KOLUMNA: Użytkownicy -->
+        <article>
+            <h4>Zarządzanie Użytkownikami</h4>
+            <table>
+                
+                
+                <thead>
+    <tr>
+        <th>Imię i Nazwisko</th>
+        <th>Status</th>
+        <th>Akcje</th>
+    </tr>
+</thead>
+<tbody>
+    {% for user in wszyscy_uzytkownicy %}
+    <tr>
+        <td>{{ user.imie_nazwisko }}</td>
+        <td>
+            {% if user.is_active %}
+                <span style="color: green;">Aktywny</span>
+            {% else %}
+                <span style="color: red;">Nieaktywny</span>
+            {% endif %}
+        </td>
+        <td>
+            <a href="{{ url_for('edytuj_uzytkownika', user_id=user.id) }}">Edytuj</a> | 
+            <a href="{{ url_for('zmien_status_uzytkownika', user_id=user.id) }}">
+                {% if user.is_active %}Dezaktywuj{% else %}Aktywuj{% endif %}
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+      
+        </table>
+            <!-- PRZENIESIONY PRZYCISK JEST TERAZ POD TABELĄ, ALE NADAL W <article> -->
+            <br>
+            <a href="{{ url_for('dodaj_uzytkownika') }}" role="button">Dodaj nowego użytkownika</a>
+        </article>
+
     </div>
 {% endblock %}

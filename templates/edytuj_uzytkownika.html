@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Edytuj Użytkownika{% endblock %}
+
+{% block content %}
+    <h2>Edytuj Użytkownika</h2>
+
+    {% if error %}
+        <p style="color: var(--pico-color-red-500);">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" autocomplete="off">
+        <label for="imie_nazwisko">Imię i Nazwisko</label>
+        <input type="text" name="imie_nazwisko" id="imie_nazwisko" value="{{ user.imie_nazwisko }}" required>
+
+        <div class="grid">
+            <button type="submit">Zapisz zmiany</button>
+            <a href="{{ url_for('panel_admina') }}" class="secondary outline" role="button">Anuluj</a>
+        </div>
+    </form>
+{% endblock %}

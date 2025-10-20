@@ -1,4 +1,7 @@
 import os
+import qrcode
+import io
+from flask import send_file # Ten jest bardzo ważny!
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
@@ -23,10 +26,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 @app.route('/admin')
 def panel_admina():
-    # Pobierz wszystkie grupy z bazy danych, posortowane alfabetycznie
     wszystkie_grupy = Grupa.query.order_by(Grupa.nazwa_grupy).all()
-    # Przekaż pobraną listę do szablonu
-    return render_template('admin.html', wszystkie_grupy=wszystkie_grupy)
+    # --- NOWA LINIA ---
+    wszyscy_uzytkownicy = Uzytkownik.query.order_by(Uzytkownik.imie_nazwisko).all()
+    
+    return render_template(
+        'admin.html', 
+        wszystkie_grupy=wszystkie_grupy, 
+        # --- NOWA LINIA ---
+        wszyscy_uzytkownicy=wszyscy_uzytkownicy
+    )
 
 # NOWA FUNKCJA DO DODAWANIA GRUPY
 @app.route('/admin/dodaj-grupe', methods=['GET', 'POST'])
@@ -116,6 +125,108 @@ def usun_grupe(grupa_id):
     # Niezależnie od wyniku, wróć do panelu admina
     return redirect(url_for('panel_admina'))
 
+# NOWA FUNKCJA DO GENEROWANIA KODU QR
+@app.route('/qr-code/<int:urzadzenie_id>')
+def generuj_qr(urzadzenie_id):
+    # Krok 1: Upewnij się, że urządzenie o danym ID istnieje.
+    urzadzenie = Urzadzenie.query.get_or_404(urzadzenie_id)
+
+    # Krok 2: Wygeneruj pełny, docelowy URL do strony szczegółów.
+    # Używamy `_external=True`, aby uzyskać pełny adres z domeną, np. http://127.0.0.1:5000/...
+    url_do_zakodowania = url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie.id, _external=True)
+
+    # Krok 3: Wygeneruj obrazek kodu QR w pamięci.
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(url_do_zakodowania)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    # Krok 4: Zapisz obrazek do "wirtualnego pliku" w pamięci RAM.
+    img_io = io.BytesIO()
+    img.save(img_io, 'PNG')
+    img_io.seek(0) # Przewiń "plik" na początek
+
+    # Krok 5: Wyślij ten wirtualny plik do przeglądarki jako odpowiedź.
+    return send_file(img_io, mimetype='image/png')
+
+# NOWA FUNKCJA DO WYŚWIETLANIA STRONY Z KODEM QR
+@app.route('/pokaz-qr/<int:urzadzenie_id>')
+def pokaz_qr(urzadzenie_id):
+    urzadzenie = Urzadzenie.query.get_or_404(urzadzenie_id)
+    return render_template('pokaz_qr.html', urzadzenie=urzadzenie)
+
+# NOWA FUNKCJA DO DODAWANIA UŻYTKOWNIKA
+@app.route('/admin/dodaj-uzytkownika', methods=['GET', 'POST'])
+def dodaj_uzytkownika():
+    error = None
+    if request.method == 'POST':
+        imie_nazwisko = request.form.get('imie_nazwisko')
+
+        if not imie_nazwisko:
+            error = "Pole Imię i Nazwisko jest wymagane."
+        else:
+            try:
+                nowy_uzytkownik = Uzytkownik(imie_nazwisko=imie_nazwisko)
+                db.session.add(nowy_uzytkownik)
+                db.session.commit()
+                flash(f"Użytkownik '{imie_nazwisko}' został pomyślnie dodany.", 'success')
+                return redirect(url_for('panel_admina'))
+            except IntegrityError:
+                db.session.rollback()
+                error = f"Błąd: Użytkownik o imieniu '{imie_nazwisko}' już istnieje."
+
+    return render_template('dodaj_uzytkownika.html', error=error)
+
+# NOWA FUNKCJA DO EDYCJI UŻYTKOWNIKA
+@app.route('/admin/edytuj-uzytkownika/<int:user_id>', methods=['GET', 'POST'])
+def edytuj_uzytkownika(user_id):
+    user_do_edycji = Uzytkownik.query.get_or_404(user_id)
+    error = None
+
+    if request.method == 'POST':
+        nowe_imie = request.form.get('imie_nazwisko')
+        if not nowe_imie:
+            error = "Pole Imię i Nazwisko jest wymagane."
+        else:
+            try:
+                user_do_edycji.imie_nazwisko = nowe_imie
+                db.session.commit()
+                flash(f"Nazwa użytkownika została zaktualizowana.", 'success')
+                return redirect(url_for('panel_admina'))
+            except IntegrityError:
+                db.session.rollback()
+                error = f"Błąd: Użytkownik o imieniu '{nowe_imie}' już istnieje."
+
+    return render_template('edytuj_uzytkownika.html', user=user_do_edycji, error=error)
+
+# NOWA FUNKCJA DO BEZPIECZNEGO USUWANIA UŻYTKOWNIKA
+@app.route('/admin/zmien-status-uzytkownika/<int:user_id>')
+def zmien_status_uzytkownika(user_id):
+    user = Uzytkownik.query.get_or_404(user_id)
+    # Odwracamy status: z aktywnego na nieaktywny i na odwrót
+    user.is_active = not user.is_active
+    db.session.commit()
+    
+    status_text = "aktywny" if user.is_active else "nieaktywny"
+    flash(f"Status użytkownika '{user.imie_nazwisko}' został zmieniony na: {status_text}.", 'success')
+    return redirect(url_for('panel_admina'))
+    
+    # --- KLUCZOWE ZABEZPIECZENIE ---
+    # Sprawdzamy, czy ten użytkownik ma jakiekolwiek wpisy w historii zmian
+    if user_do_usuniecia.historia_zmian:
+        flash(f"Błąd: Nie można usunąć użytkownika '{user_do_usuniecia.imie_nazwisko}', ponieważ jest powiązany z historią zmian urządzeń.", 'error')
+    else:
+        db.session.delete(user_do_usuniecia)
+        db.session.commit()
+        flash(f"Użytkownik '{user_do_usuniecia.imie_nazwisko}' został pomyślnie usunięty.", 'success')
+        
+    return redirect(url_for('panel_admina'))
+
 # Tworzymy obiekt bazy danych, łącząc SQLAlchemy z naszą aplikacją Flask
 db = SQLAlchemy(app)
 
@@ -135,13 +246,19 @@ class Uzytkownik(db.Model):
     __tablename__ = 'uzytkownicy'
     id = db.Column(db.Integer, primary_key=True)
     imie_nazwisko = db.Column(db.String(100), nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
     historia_zmian = db.relationship('HistoriaZmian', backref='uzytkownik', lazy=True)
 
 class Lokalizacja(db.Model):
     __tablename__ = 'lokalizacje'
     id = db.Column(db.Integer, primary_key=True)
-    nazwa_lokalizacji = db.Column(db.String(100), unique=True, nullable=False)
-    typ_lokalizacji = db.Column(db.String(50), nullable=False)
+        # TYP LOKALIZACJI - to jest teraz nasz główny przełącznik
+    typ_lokalizacji = db.Column(db.String(50), nullable=False) # 'MAGAZYN', 'BUDOWA', 'OSOBA'
+        # Nazwa miejsca (używane tylko, gdy typ to BUDOWA)
+    nazwa_budowy = db.Column(db.String(100), nullable=True)
+        # Połączenie z użytkownikiem (używane tylko, gdy typ to OSOBA)
+    przypisany_uzytkownik_id = db.Column(db.Integer, db.ForeignKey('uzytkownicy.id'), nullable=True)
+    przypisany_uzytkownik = db.relationship('Uzytkownik')
 
 class Grupa(db.Model):
     __tablename__ = 'grupy'
@@ -153,28 +270,37 @@ class Grupa(db.Model):
 class Urzadzenie(db.Model):
     __tablename__ = 'urzadzenia'
     id = db.Column(db.Integer, primary_key=True)
-        # Używamy jednego, globalnie unikalnego numeru
     numer_ewidencyjny = db.Column(db.Integer, unique=True, nullable=False)
     nazwa = db.Column(db.String(100), nullable=False)
     producent = db.Column(db.String(100))
     nr_seryjny = db.Column(db.String(100), unique=True)
     data_zakupu = db.Column(db.Date)
     aktualny_imei_sim = db.Column(db.String(50))
-    aktualna_lokalizacja = db.Column(db.String(100))
+        # --- UPEWNIJ SIĘ, ŻE TA LINIA WYGLĄDA DOKŁADNIE TAK ---
+    aktualna_lokalizacja = db.Column(db.String(100)) # A NIE lokalizacja_id
     aktualny_status = db.Column(db.String(50))
     uwagi_serwisowe = db.Column(db.Text)
     grupa_id = db.Column(db.Integer, db.ForeignKey('grupy.id'), nullable=False)
     grupa = db.relationship('Grupa', back_populates='urzadzenia')
+    
     historia = db.relationship('HistoriaZmian', backref='urzadzenie', lazy=True, cascade="all, delete-orphan")
 
     @property
+    def wyswietlana_lokalizacja(self):
+        if not self.lokalizacja:
+            return "Brak przypisania"
+        if self.lokalizacja.typ_lokalizacji == 'MAGAZYN':
+            return "Magazyn Główny"
+        if self.lokalizacja.typ_lokalizacji == 'BUDOWA':
+            return self.lokalizacja.nazwa_budowy
+        if self.lokalizacja.typ_lokalizacji == 'OSOBA':
+            return self.lokalizacja.przypisany_uzytkownik.imie_nazwisko
+        return "Nieznana lokalizacja"
+
+    @property
     def identyfikator_sprzetu(self):
-        # Składamy identyfikator z globalnego numeru
         return f"AP-{self.grupa.skrot}-{self.numer_ewidencyjny:03d}"
-
-
-
-
+    
 class HistoriaZmian(db.Model):
     __tablename__ = 'historia_zmian'
     id = db.Column(db.Integer, primary_key=True)
@@ -254,7 +380,7 @@ def zmien_status(urzadzenie_id):
         return redirect(url_for('index'))
     else:
         wszystkie_lokalizacje = Lokalizacja.query.all()
-        wszyscy_uzytkownicy = Uzytkownik.query.all()
+        wszyscy_uzytkownicy = Uzytkownik.query.filter_by(is_active=True).order_by(Uzytkownik.imie_nazwisko).all()
         return render_template('zmien_status.html', 
                                urzadzenie=urzadzenie_do_zmiany,
                                wszystkie_lokalizacje=wszystkie_lokalizacje,

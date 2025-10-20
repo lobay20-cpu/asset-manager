@@ -56,7 +56,7 @@
                     <td><a href="{{ url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie.id) }}">{{ urzadzenie.identyfikator_sprzetu }}</a></td>
                     <td>{{ urzadzenie.nazwa }}</td>
                     <td>{{ urzadzenie.grupa.nazwa_grupy }}</td>
-                    <td>{{ urzadzenie.aktualna_lokalizacja }}</td>
+                    <td>{{ urzadzenie.wyswietlana_lokalizacja }}</td>
                     <td><span class="status-tag status-{{ urzadzenie.aktualny_status.lower().replace('ę', 'e').replace(' ', '-') }}">{{ urzadzenie.aktualny_status }}</span></td>
                     <td><a href="{{ url_for('zmien_status', urzadzenie_id=urzadzenie.id) }}">Zmień</a></td>
                 </tr>

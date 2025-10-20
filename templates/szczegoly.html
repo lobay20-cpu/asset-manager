@@ -8,14 +8,17 @@
         <h2>{{ urzadzenie.identyfikator_sprzetu }}</h2>
     </hgroup>
 
-        <!-- NOWY PRZYCISK "USUŃ" "EDYTUJ" -->
- <div class="grid">
+<!-- NOWY, POPRAWIONY KONTENER NA PRZYCISKI -->
+    <div role="group">
         <a href="{{ url_for('edytuj_urzadzenie', urzadzenie_id=urzadzenie.id) }}" role="button">Edytuj dane</a>
+        
+        <a href="{{ url_for('pokaz_qr', urzadzenie_id=urzadzenie.id) }}" role="button" class="secondary outline">
+            <svg ...> ... </svg> Pokaż Kod QR
+        </a>
+        
         <a href="{{ url_for('usun_urzadzenie', urzadzenie_id=urzadzenie.id) }}" class="contrast outline" role="button" onclick="return confirm('Czy na pewno chcesz trwale usunąć to urządzenie i całą jego historię?')">Usuń urządzenie</a>
     </div>
-        
-    </div>
-        
+
     <article>
 
     <article>

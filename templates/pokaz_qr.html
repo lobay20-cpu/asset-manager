@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Kod QR dla {{ urzadzenie.identyfikator_sprzetu }}{% endblock %}
+
+{% block content %}
+    <article style="text-align: center;">
+        <hgroup>
+            <h2>Kod QR dla urządzenia</h2>
+            <h1>{{ urzadzenie.identyfikator_sprzetu }}</h1>
+        </hgroup>
+        
+        <!-- Tutaj wyświetlamy obrazek generowany przez naszą drugą funkcję -->
+        <img src="{{ url_for('generuj_qr', urzadzenie_id=urzadzenie.id) }}" 
+             alt="Kod QR dla urządzenia {{ urzadzenie.identyfikator_sprzetu }}"
+             style="max-width: 300px; margin: 2rem auto;">
+        
+        <p>Zeskanuj ten kod telefonem, aby przejść bezpośrednio do strony tego urządzenia.</p>
+
+        <footer>
+            <a href="{{ url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie.id) }}" role="button" class="secondary">Wróć do szczegółów</a>
+        </footer>
+    </article>
+{% endblock %}
