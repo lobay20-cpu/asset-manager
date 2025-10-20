@@ -43,6 +43,43 @@
         color: white;
         background-color: var(--pico-color-red-500);
       }
+
+
+          /* --- NOWE STYLE RESPONSYWNE --- */
+      /* Domyślnie ukrywamy tabelę */
+      .desktop-only { display: none; }
+      
+      /* Style dla pojedynczej karty */
+      .card {
+        border: 1px solid var(--muted-border-color);
+        border-radius: var(--border-radius);
+        padding: var(--block-spacing-horizontal);
+        margin-bottom: var(--spacing);
+        background-color: var(--card-background-color);
+      }
+      .card h5 { margin-bottom: 0.5rem; }
+
+      /* Media Query: jeśli ekran jest szerszy niż 768px... */
+      @media (min-width: 768px) {
+        /* ...pokaż tabelę */
+        .desktop-only { display: table; } 
+        /* ...i ukryj widok kart */
+        .mobile-only { display: none; }
+      } 
+      
+       /* --- NOWA REGUŁA: Wyrównuje wszystkie ikony SVG w przyciskach --- */
+      a[role="button"] svg {
+        vertical-align: text-bottom;
+      }
+      
+      /* --- NOWA REGUŁA: Całkowicie resetuje wygląd tabeli-layoutu --- */
+      form table[role="presentation"] {
+        border-spacing: 0;
+        border-collapse: collapse;
+      }
+    </style>
+
+
     </style>
 </head>
 <body>

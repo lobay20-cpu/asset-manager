@@ -133,7 +133,7 @@ def generuj_qr(urzadzenie_id):
 
     # Krok 2: Wygeneruj pełny, docelowy URL do strony szczegółów.
     # Używamy `_external=True`, aby uzyskać pełny adres z domeną, np. http://127.0.0.1:5000/...
-    url_do_zakodowania = url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie.id, _external=True)
+    url_do_zakodowania = url_for('zmien_status', urzadzenie_id=urzadzenie.id, _external=True)
 
     # Krok 3: Wygeneruj obrazek kodu QR w pamięci.
     qr = qrcode.QRCode(
@@ -297,7 +297,7 @@ class Urzadzenie(db.Model):
 
     @property
     def identyfikator_sprzetu(self):
-        return f"AP-{self.grupa.skrot}-{self.numer_ewidencyjny:03d}"
+        return f"FR-{self.grupa.skrot}-{self.numer_ewidencyjny:03d}"
     
 class HistoriaZmian(db.Model):
     __tablename__ = 'historia_zmian'
@@ -345,8 +345,8 @@ def index():
                            wszystkie_grupy=wszystkie_grupy,
                            wszystkie_statusy=['Wszystkie'] + MOZLIWE_STATUSY,
                            wybrany_status=wybrany_status or 'Wszystkie',
-                           wybrana_grupa_id=int(wybrana_grupa_id) if wybrana_grupa_id and wybrana_grupa_id != 'Wszystkie' else 
-'Wszystkie')
+                           # POPRAWKA TUTAJ:
+                           wybrana_grupa_id=int(wybrana_grupa_id) if wybrana_grupa_id and wybrana_grupa_id.isdigit() else 'Wszystkie')
 
 @app.route('/zmien/<int:urzadzenie_id>', methods=['GET', 'POST'])
 def zmien_status(urzadzenie_id):

@@ -9,43 +9,62 @@
     </hgroup>
     
     <!-- NOWY, ZAAWANSOWANY FORMULARZ FILTROWANIA -->
+<!-- OSTATECZNA, NAJLEPSZA WERSJA FORMULARZA FILTRÓW -->
+<!-- WERSJA ODPORNA NA BŁĘDY UKŁADU -->
+<!-- WERSJA Z UŻYCIEM TABELI DO UKŁADU - MUSI ZADZIAŁAĆ -->
     <form method="GET" action="{{ url_for('index') }}">
-        <div class="grid">
-            <!-- Filtr Grupy -->
-            <select name="grupa_id" id="grupa_id">
-                <option value="Wszystkie">Grupa: Wszystkie</option>
-                {% for grupa in wszystkie_grupy %}
-                    <option value="{{ grupa.id }}" {% if grupa.id == wybrana_grupa_id %}selected{% endif %}>
-                        Grupa: {{ grupa.nazwa_grupy }}
-                    </option>
-                {% endfor %}
-            </select>
-
-            <!-- Filtr Statusu -->
-            <select name="status" id="status">
-                {% for status in wszystkie_statusy %}
-                    <option value="{{ status }}" {% if status == wybrany_status %}selected{% endif %}>
-                        Status: {{ status }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        
-        <div class="grid">
-            <!-- Przyciski -->
-            <button type="submit">Filtruj</button>
-            <a href="{{ url_for('index') }}" class="secondary outline" role="button">Wyczyść filtry</a>
-        </div>
+        <table role="presentation" style="border: none; background: none; margin-bottom: 1rem;">
+            <tr>
+                <td style="padding: 0 0.5rem 0 0; border: none; vertical-align: bottom;">
+                    <select name="grupa_id" id="grupa_id">
+                        <option value="Wszystkie">Grupa: Wszystkie</option>
+                        {% for grupa in wszystkie_grupy %}
+                            <option value="{{ grupa.id }}" {% if grupa.id == wybrana_grupa_id %}selected{% endif %}>Grupa: {{ grupa.nazwa_grupy }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td style="padding: 0 0.5rem; border: none; vertical-align: bottom;">
+                    <select name="status" id="status">
+                        {% for status in wszystkie_statusy %}
+                            <option value="{{ status }}" {% if status == wybrany_status %}selected{% endif %}>Status: {{ status }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td style="padding: 0 0 0 0.5rem; border: none; vertical-align: bottom;">
+                    <button type="submit" style="margin: 0;">Filtruj</button>
+                </td>
+                <td style="padding: 0 0 0 0.5rem; border: none; vertical-align: bottom;">
+                    <a href="{{ url_for('index') }}" role="button" class="secondary outline" style="margin: 0;">Wyczyść</a>
+                </td>
+            </tr>
+        </table>
     </form>
 
-    <figure>
+<!-- WIDOK KART (dla telefonów, domyślnie widoczny) -->
+    <div class="mobile-only">
+        {% for urzadzenie in urzadzenia %}
+            <article class="card">
+                <h5>
+                    <a href="{{ url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie.id) }}"><strong>{{ urzadzenie.identyfikator_sprzetu }}</strong></a>
+                </h5>
+                <p style="margin-bottom: 0.5rem;">{{ urzadzenie.nazwa }}</p>
+                <p><strong>Lokalizacja:</strong> {{ urzadzenie.aktualna_lokalizacja }}</p>
+                <footer>
+                    <span class="status-tag status-{{ urzadzenie.aktualny_status.lower().replace('ę', 'e').replace(' ', '-') }}">{{ urzadzenie.aktualny_status }}</span>
+                </footer>
+            </article>
+        {% endfor %}
+    </div>
+
+    <!-- WIDOK TABELI (dla komputerów, domyślnie ukryty) -->
+    <figure class="desktop-only">
         <table>
             <thead>
                 <tr>
                     <th>Identyfikator</th>
                     <th>Nazwa</th>
                     <th>Grupa</th>
-                    <th>Aktualna Lokalizacja</th>
+                    <th>Lokalizacja</th>
                     <th>Status</th>
                     <th>Akcje</th>
                 </tr>
@@ -56,7 +75,7 @@
                     <td><a href="{{ url_for('szczegoly_urzadzenia', urzadzenie_id=urzadzenie.id) }}">{{ urzadzenie.identyfikator_sprzetu }}</a></td>
                     <td>{{ urzadzenie.nazwa }}</td>
                     <td>{{ urzadzenie.grupa.nazwa_grupy }}</td>
-                    <td>{{ urzadzenie.wyswietlana_lokalizacja }}</td>
+                    <td>{{ urzadzenie.aktualna_lokalizacja }}</td>
                     <td><span class="status-tag status-{{ urzadzenie.aktualny_status.lower().replace('ę', 'e').replace(' ', '-') }}">{{ urzadzenie.aktualny_status }}</span></td>
                     <td><a href="{{ url_for('zmien_status', urzadzenie_id=urzadzenie.id) }}">Zmień</a></td>
                 </tr>
