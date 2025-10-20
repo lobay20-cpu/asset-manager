@@ -253,12 +253,10 @@ class Lokalizacja(db.Model):
     __tablename__ = 'lokalizacje'
     id = db.Column(db.Integer, primary_key=True)
         # TYP LOKALIZACJI - to jest teraz nasz główny przełącznik
-    typ_lokalizacji = db.Column(db.String(50), nullable=False) # 'MAGAZYN', 'BUDOWA', 'OSOBA'
+    nazwa_lokalizacji = db.Column(db.String(100), unique=True, nullable=False)
         # Nazwa miejsca (używane tylko, gdy typ to BUDOWA)
-    nazwa_budowy = db.Column(db.String(100), nullable=True)
+    typ_lokalizacji = db.Column(db.String(50), nullable=False)
         # Połączenie z użytkownikiem (używane tylko, gdy typ to OSOBA)
-    przypisany_uzytkownik_id = db.Column(db.Integer, db.ForeignKey('uzytkownicy.id'), nullable=True)
-    przypisany_uzytkownik = db.relationship('Uzytkownik')
 
 class Grupa(db.Model):
     __tablename__ = 'grupy'
